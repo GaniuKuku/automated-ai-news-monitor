@@ -1,6 +1,6 @@
 # Automated #AI News Monitor
 
-![Architecture Diagram](ai.png)
+![Architecture Diagram](images/ai.png)
 
 ## Overview
 An end-to-end automated data pipeline that monitors the web for #AI news, prevents duplicate logging, analyzes the sentiment using rule-based JavaScript logic, and dynamically routes the data to appropriate databases and communication channels.
