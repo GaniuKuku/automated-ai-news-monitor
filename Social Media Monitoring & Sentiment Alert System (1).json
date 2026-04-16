@@ -1,0 +1,485 @@
+{
+  "name": "Social Media Monitoring & Sentiment Alert System",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -864,
+        -176
+      ],
+      "id": "c2813091-6b76-4cbd-9e17-af8b953fa8db",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/news",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"q\": \"#AI\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -576,
+        -288
+      ],
+      "id": "a7915053-baa2-419c-8a79-b7356bcef491",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "jbGRCSxFMlsl312q",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "news",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        -288
+      ],
+      "id": "d1b324f0-1500-4324-8fe3-9e2d76f58eff",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n  \n  // Grab both the title and the snippet, make them lowercase\n  const title = (item.json.title || \"\").toLowerCase();\n  const snippet = (item.json.snippet || \"\").toLowerCase();\n  \n  // Combine them into one long string to search\n  const textToSearch = title + \" \" + snippet;\n  \n  const negativeWords = [\"bias\", \"discrimination\", \"hallucinations\", \"failures\", \"catastrophic\", \"risks\", \"dangers\", \"deepfakes\", \"misinformation\", \"job losses\", \"privacy violations\", \"gone rogue\", \"slop\", \"AI slop\", \"enshittification\", \"brainrot\", \"AI washing\", \"snake oil\", \"jailbreaking\", \"backlash\", \"crash\", \"scandal\", \"existential threat\", \"extinction-level\", \"ableism\", \"scam\", \"bad\", \"issue\", \"fraud\", \"broken\", \"debt\"];\n  const positiveWords = [\"breakthrough\", \"revolutionary\", \"game-changer\", \"milestone\", \"groundbreaking\", \"transformative\", \"ethical AI\", \"responsible innovation\", \"efficiency gains\", \"cost savings\", \"accuracy boost\", \"lifesaving\", \"record-breaking\", \"unprecedented\", \"scalable\", \"accessible\", \"empowering\", \"human-AI collaboration\", \"sustainable\", \"frontier model\", \"AGI progress\", \"great\", \"best\", \"love\", \"excellent\", \"amazing\"];\n  \n  let sentiment = \"Neutral\"; \n  \n  if (negativeWords.some(word => textToSearch.includes(word))) {\n    sentiment = \"Negative\";\n  } else if (positiveWords.some(word => textToSearch.includes(word))) {\n    sentiment = \"Positive\";\n  }\n  \n  item.json.sentiment = sentiment;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        -288
+      ],
+      "id": "2fe85fd8-4832-4a4a-a91b-db259d588efe",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.Sentiment }}",
+                    "rightValue": "Negative",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "acda4786-a5d0-4db0-a87b-c69f197680ed"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "99ad61ae-45f8-47cd-8585-94405511efb7",
+                    "leftValue": "={{ $json.Sentiment }}",
+                    "rightValue": "Positive",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        544,
+        -288
+      ],
+      "id": "65224bb2-4953-4c88-a29e-3fc3845801a4",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1YwV7CN-7Su2YTc2cvKJrn2FQH3iBHMxji-Vv8tnL1G0",
+          "mode": "list",
+          "cachedResultName": "AI ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YwV7CN-7Su2YTc2cvKJrn2FQH3iBHMxji-Vv8tnL1G0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YwV7CN-7Su2YTc2cvKJrn2FQH3iBHMxji-Vv8tnL1G0/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Text": "={{ $json.title }}",
+            "Sentiment": "={{ $json.sentiment }}",
+            "URL": "={{ $json.link }}",
+            "Timestamp": "={{ $json.date }}"
+          },
+          "matchingColumns": [
+            "URL"
+          ],
+          "schema": [
+            {
+              "id": "Text",
+              "displayName": "Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sentiment",
+              "displayName": "Sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        352,
+        -288
+      ],
+      "id": "dbbab688-7061-4962-8568-5dc657d7f88c",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "cxnDmWPjTtBMsHaE",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "app8hSIEGOcd2dG1j",
+          "mode": "list",
+          "cachedResultName": "Social Media Mentions",
+          "cachedResultUrl": "https://airtable.com/app8hSIEGOcd2dG1j"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblBZ4I2dSh7EqCDd",
+          "mode": "list",
+          "cachedResultName": "Testimonials",
+          "cachedResultUrl": "https://airtable.com/app8hSIEGOcd2dG1j/tblBZ4I2dSh7EqCDd"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Text": "={{ $('Code in JavaScript').item.json.title }}",
+            "URL": "={{ $('Code in JavaScript').item.json.link }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Text",
+              "displayName": "Text",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "URL",
+              "displayName": "URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        736,
+        -160
+      ],
+      "id": "5f8ea062-4cec-4c5a-9a1e-81ac2462f326",
+      "name": "Create a record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "Your_Airtable_ID",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_CHAT_ID_HERE",
+        "text": "=🚨 **NEGATIVE MENTION DETECTED** 🚨\n\nSource: {{ $('Split Out').item.json.source }}\n\nLink: {{ $('Append or update row in sheet').item.json.URL }}\n\nSnippet: {{ $('Append or update row in sheet').item.json.Text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        736,
+        -368
+      ],
+      "id": "e0219aec-1ec3-45ff-92c7-9ba185971200",
+      "name": "Send a text message",
+      "webhookId": "94501d8e-ab5e-430f-8db6-7070a688feae",
+      "credentials": {
+        "telegramApi": {
+          "id": "wIQQLd2L472S98DI",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1YwV7CN-7Su2YTc2cvKJrn2FQH3iBHMxji-Vv8tnL1G0",
+          "mode": "list",
+          "cachedResultName": "AI ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YwV7CN-7Su2YTc2cvKJrn2FQH3iBHMxji-Vv8tnL1G0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YwV7CN-7Su2YTc2cvKJrn2FQH3iBHMxji-Vv8tnL1G0/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -224,
+        -80
+      ],
+      "id": "09092798-c016-422b-90b2-abfa0fa94e63",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "cxnDmWPjTtBMsHaE",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "link",
+              "field2": "URL"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.compareDatasets",
+      "typeVersion": 2.3,
+      "position": [
+        64,
+        -272
+      ],
+      "id": "af02c231-c8ca-4ab2-992a-952f0a4e44d5",
+      "name": "Compare Datasets"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Compare Datasets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Compare Datasets",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Compare Datasets": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "54c1e23a-49f2-485e-ab8e-e6b3178fcd0d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0cd62f4efe0f0e3a2df1d4be380b69b067448ef70901f0cb0d5f959b687d16cc"
+  },
+  "id": "ISLczbeDt6f37Dn4",
+  "tags": []
+}
